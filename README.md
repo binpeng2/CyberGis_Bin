@@ -14,11 +14,12 @@ This script contains functions to read data of any city, and functions to conver
 will be completed later after successful training.
 
 # Progress:
-1, I have written a script to extract number of visitors to any city from twitter_streaming data from twitter API. 
-2, Collected COVID cases data of some MSA.
-3, Training model to evaluate COVID risk with visitors data with LSTM (tensorflow)
-4, Learned common algorithm for time-series prediction like LSTM and RNN. 
+1, I have written a script to extract number of visitors to any city from twitter_streaming data from twitter API.  
+2, Collected COVID cases data of some MSA.  
+3, Training model to evaluate COVID risk with visitors data with LSTM (tensorflow)  
+4, Learned common algorithm for time-series prediction like LSTM and RNN.   
 
 # Planning:
-1, Have a rubric model done, or have a rural formula for risk evaluation
+1, Have a rubric model done, or have a rural formula for risk evaluation  
 2, Learn the website and try to make my progress work on the website.
+ 
