@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from collections import defaultdict
+import datetime
 
 def createat2date(str):
     """Convert a datetime in string format to date
@@ -12,7 +13,6 @@ def createat2date(str):
         The date.
 
     """
-
     return str.split(' ')[0]
 
 def data2chunks(data_path, write_folder):
@@ -34,19 +34,23 @@ def data2chunks(data_path, write_folder):
     chunksize = 10 ** 6
     for i, chunk in enumerate(pd.read_csv(data_path, chunksize=chunksize)):
         print('Chunk: ', i)
-        df = chunk.loc[:, ['name', 'author_Id', 'created_at', 'location', 'place_type', 'place_full_name', 'place_country']]
+        df = chunk.loc[:, ['currentGEOID', 'lon', 'lat', 'name', 'author_Id', 'created_at', 'location', 'place_type', 'place_full_name', 'place_country']]
+        # print(df.head())
+        # break
         drop_idxs = []
-        last_Id_place_date = ('','')
+        last_Id_place_date = ('', '')
         for index, row in df.iterrows():
-            if row['place_type'] != 'city':
+            if row['place_type'] not in ['city', 'poi', 'neighborhood']:
                 drop_idxs.append(index)
                 continue
             row['created_at'] = createat2date(row['created_at'])
-            if (row['author_Id'], row['place_full_name']) == last_Id_place_date:
+            if (row['author_Id'], row['currentGEOID']) == last_Id_place_date:
                 drop_idxs.append(index)
-            last_Id_place_date = (row['author_Id'], row['place_full_name'])
+            last_Id_place_date = (row['author_Id'], row['currentGEOID'])
         df = df.drop(drop_idxs)
+        # print(df.head())
         df.to_csv(write_folder + 'chunk_' + str(i) + '.csv', index=False)
+        # break
 
 def chunks2dict(write_path, start, end):
     """
@@ -68,28 +72,59 @@ def chunks2dict(write_path, start, end):
     last_id = ''
     for i in range(start, end):
         print("Processing: ", i)
-        df = pd.read_csv("./chunks/chunk_"+str(i)+".csv")
+        df = pd.read_csv("./chunks_2/chunk_"+str(i)+".csv")
         for index, row in df.iterrows():
             if row['author_Id'] == last_id:
-                place = row['place_full_name']
+                place = row['currentGEOID']
                 time = createat2date(row["created_at"])
                 m[place][time] += 1
             last_id = row['author_Id']
     df = pd.DataFrame.from_dict(m, orient='index').sort_index(axis=1)
+    df.reset_index(inplace=True)
+    df = df.rename(columns={'index': 'GEOID'})
     df = df.fillna(0)
     df = pd.DataFrame(df, dtype='int64')
+    df.insert(1, "geoName", "")
+    df.insert(2, "geoRegion", "")
+    df.insert(3, "geoLON", "")
+    df.insert(4, "geoLAT", "")
+    df.insert(5, "ISO3", "")
+    df_query = pd.read_csv("./GeoID_name.csv", encoding="ISO-8859-1")
+    for index, row in df.iterrows():
+        # print("The row geoid is: ", int(row["GEOID"]))
+        geoInfo = df_query[df_query["GEOID"] == int(row["GEOID"])]
+        # print(geoInfo)
+        df.at[index, "geoName"] = geoInfo["NAME"].values[0] if len(geoInfo["NAME"].values) > 0 else "NaN"
+        df.at[index, "geoRegion"] = geoInfo["region"].values[0] if len(geoInfo["region"].values) > 0 else "NaN"
+        df.at[index, "geoLON"] = geoInfo["LON"].values[0] if len(geoInfo["LON"].values) > 0 else "NaN"
+        df.at[index, "geoLAT"] = geoInfo["LAT"].values[0] if len(geoInfo["LAT"].values) > 0 else "NaN"
+        df.at[index, "ISO3"] = geoInfo["ISO3"].values[0] if len(geoInfo["ISO3"].values) > 0 else "NaN"
     df.to_csv(write_path)
 
-# def merge_dict():
-#     df = None
-#     for i in range(n):
-#         df_i = pd.read_csv('./dicts/dict_'+str(i)+'.csv')
-#         if not df:
-#             df = df_i
-#         for row_idx, row in df_i.iterrows():
-#             df[]
+def accu_dict():
+    """
+
+    This function accumulate 7 and 14 days visitors in each cell
+
+    """
+    df = pd.read_csv("./dicts_2/dict_0-329.csv")
+    df = df.astype(str)
+    for i in range(0, 1149):
+        visitors_num = []
+        for j in range(7, 126):
+            visitors_num.append(int(df.iloc[:, j].at[i]))
+            if len(visitors_num) > 14:
+                visitors_num.pop(0)
+            seven_accu = sum(visitors_num[-7:])
+            fourteen_accu = sum(visitors_num)
+            print((df.iloc[:, j].at[i], seven_accu, fourteen_accu))
+            df.iloc[:, j].at[i] = "(" + str(df.iloc[:, j].at[i]) + ", " + str(seven_accu) + ", " + str(
+                fourteen_accu) + ")"
+    df.to_csv("./dicts_2/accu_dict_0-329.csv")
 
 
 if __name__ == "__main__":
-    # data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks/')
-    chunks2dict("./dicts/dict_0-329"+".csv", 0, 330)
+    chunksize = 10 ** 6
+    # data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks_2/')
+    # chunks2dict("./dicts_2/dict_0-329"+".csv", 0, 330)
+    accu_dict()
