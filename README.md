@@ -18,6 +18,7 @@ will be completed later after successful training.
 2, Collected COVID cases data of some MSA.  
 3, Training model to evaluate COVID risk with visitors data with LSTM (tensorflow)  
 4, Learned common algorithm for time-series prediction like LSTM and RNN.   
+5, Add geoID infos, and accumulate 7, 14 days visitors now. New dataset can be found in folder dicts_2.  
 
 # Planning:
 1, Have a rubric model done, or have a rural formula for risk evaluation  
