@@ -101,30 +101,47 @@ def chunks2dict(write_path, start, end):
         df.at[index, "ISO3"] = geoInfo["ISO3"].values[0] if len(geoInfo["ISO3"].values) > 0 else "NaN"
     df.to_csv(write_path)
 
-def accu_dict():
+def accu_dict(time_length):
     """
 
     This function accumulate 7 and 14 days visitors in each cell
 
     """
     df = pd.read_csv("./dicts_2/dict_0-329.csv")
-    df = df.astype(str)
     for i in range(0, 1149):
         visitors_num = []
         for j in range(7, 126):
             visitors_num.append(int(df.iloc[:, j].at[i]))
-            if len(visitors_num) > 14:
+            if len(visitors_num) > time_length:
                 visitors_num.pop(0)
-            seven_accu = sum(visitors_num[-7:])
-            fourteen_accu = sum(visitors_num)
-            print((df.iloc[:, j].at[i], seven_accu, fourteen_accu))
-            df.iloc[:, j].at[i] = "(" + str(df.iloc[:, j].at[i]) + ", " + str(seven_accu) + ", " + str(
-                fourteen_accu) + ")"
-    df.to_csv("./dicts_2/accu_dict_0-329.csv")
+            time_accu = sum(visitors_num)
+            # print((df.iloc[:, j].at[i], seven_accu, fourteen_accu))
+            df.iloc[:, j].at[i] = time_accu
+    df.to_csv("./dicts_2/accu_dict_0-329_" + str(time_length) + ".csv")
 
+def calc_percent(read_path, write_path):
+    df = pd.read_csv(read_path)
+    for i in range(0, 1149):
+        prev_num = 0
+        for j in range(7, 126):
+            divider = (df.iloc[:, j].at[i] + prev_num) / 2.0
+            print(prev_num, df.iloc[:, j].at[i], divider, round((df.iloc[:, j].at[i] - prev_num) / float(divider), 2))
+            temp = df.iloc[:, j].at[i]
+            df.iloc[:, j].at[i] = round((df.iloc[:, j].at[i] - prev_num) / float(divider), 3) * 100 if divider != 0 else 0
+            if j == 7:
+                df.iloc[:, j].at[i] = 1
+            prev_num = temp
+    df.to_csv(write_path)
 
 if __name__ == "__main__":
-    chunksize = 10 ** 6
+    # chunksize = 10 ** 6
     # data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks_2/')
     # chunks2dict("./dicts_2/dict_0-329"+".csv", 0, 330)
-    accu_dict()
+    # accu_dict(14)
+    calc_percent("./dicts_2/dict_0-329"+".csv", "./dicts_2/dict_0-329_percent"+".csv")
+    # df = pd.read_csv("./dicts_2/accu_dict_0-329.csv")
+    # print(df.head)
+    # print(df.iloc[1]['2/14/2020'])
+    # res = tuple(map(int, df.iloc[1]['2/14/2020'][1:-1].split(', ')))
+    # print(res)
+    # print(res[0])
