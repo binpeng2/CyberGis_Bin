@@ -15,9 +15,32 @@ risk_evaluate.py:
 This script contains functions to read data of any city, and functions to convert data to the form required by LSTM. Comments
 will be completed later after successful training.
 
-# User Guide
+# User Guide for data preprocessing
 
-
+0, There are four functions in the script:  
+**data2chunks**: convert twitter stream data into chunks and write them to the folder    \
+**chunks2dict**: read the chunks and generate dataframe for number of visitors to each city at each date   
+**accu_dict**: read the dataframe, and accumulate the number of visitors to cities in past n days  
+**calc_percent**: read the dataframe, calculate the percentage change at each date, and write a new file which replace number of visitors with percent change  
+  
+1, Create two folder "/chunks_folder" and "/dicts_folder"
+  
+2, If you have never run the scripts before, you could try run  
+```
+python data_preprocess.py all
+```
+This command will automatically run all the functions in order and generate datachunks, dataframe of number of visitors, dataframe of number of visitors in past 14 days, and dataframe of percent change of visitors in past 14 days  
+  
+3, If you want to use one function, just run
+```
+python data_preprocess.py function_name func_arg1 func_arg2
+```
+For example, if you want to use data2chunks:
+```
+python data_preprocess.py data2chunks ./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv ./chunks_folder/
+```
+  
+4, More details about the functions, their arguments, and how to use them can be found in comments of the code. The main function also provides an example of how to use them. 
 
 # Progress:
 1, I have written a script to extract number of visitors to any city from twitter_streaming data from twitter API.  
