@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-import datetime
+import datetime as dt
+import json
 import sys
+import os
 
 def createat2date(str):
     """Convert a datetime in string format to date
@@ -134,7 +136,7 @@ def accu_dict(read_path, write_path, time_length):
             time_accu = sum(visitors_num)
             # print((df.iloc[:, j].at[i], seven_accu, fourteen_accu))
             df.iloc[:, j].at[i] = time_accu
-    df.to_csv(write_path + str(time_length) + ".csv")
+    df.to_csv(write_path)
 
 def calc_percent(read_path, write_path):
     """
@@ -157,10 +159,10 @@ def calc_percent(read_path, write_path):
     df = pd.read_csv(read_path)
     for i in range(0, 1149):
         prev_num = 0
-        for j in range(7, 126):
-            divider = (df.iloc[:, j].at[i] + prev_num) / 2.0
+        for j in range(8, 126):
+            divider = (int(df.iloc[:, j].at[i]) + prev_num) / 2.0
             print(prev_num, df.iloc[:, j].at[i], divider, round((df.iloc[:, j].at[i] - prev_num) / float(divider), 2))
-            temp = df.iloc[:, j].at[i]
+            temp = int(df.iloc[:, j].at[i])
             print(type(temp))
             if divider != 0:
                 df.iloc[:, j].at[i] = round((df.iloc[:, j].at[i] - prev_num) / float(divider), 3) * 100
@@ -173,7 +175,75 @@ def calc_percent(read_path, write_path):
             prev_num = temp
     df.to_csv(write_path)
 
+
+"""
+
+Helper function for converting string to datetime, string must be in the formate of "month-date-year", e.g. "2-14-2020"
+
+
+"""
+
+
+def str_to_date(input_string):
+    input_string = input_string.split('/')
+
+    for index in range(len(input_string)):
+        input_string[index] = int(input_string[index])
+
+    input_string = dt.datetime(input_string[2], input_string[0], input_string[1])
+
+    return input_string
+
+
+def convert_to_js(param):
+    disease = param['InputCSV']
+    beginDate = param['begin_date']
+    endDate = param['end_date']
+
+    beginDate = str_to_date(beginDate)
+    endDate = str_to_date(endDate)
+
+    df = pd.read_csv(disease)
+
+    columns = list(df.columns)
+    # print(columns)
+    # return
+    # columns.pop(0)
+    # columns.pop(0)
+    print(len(columns))
+    for column in columns:
+        if not '/' in column:
+            continue
+        column_date = str_to_date(column)
+        if (column_date > endDate or column_date < beginDate):
+            df = df.drop(column, 1)
+
+    heading = list(df.columns)
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, 'data')
+    if not os.path.exists(filename):
+        os.makedirs(filename)
+    ofile = open('./data/deaths.js', 'w+')
+    ofile.write('var GEO_VARIABLES =\n')
+    ofile.write('[\n')
+    ofile.write('  ' + json.dumps(heading) + ',\n')
+
+    for index, row in df.iterrows():
+        values = list(row)
+        ofile.write('  ' + json.dumps(values) + ',\n')
+
+    ofile.write(']\n')
+    ofile.close()
+
 if __name__ == "__main__":
+    param = {
+        'InputCSV': "./dicts_folder/accu_dict_0-329_14_percent.csv",
+        'Shapefile': "world_region.shp",
+        'TimeFrame': "14",
+        'begin_date': "02/14/2020",
+        'end_date': "05/30/2020"
+    }
+
     # data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks_2/')
     # chunks2dict("./dicts_2/dict_0-329"+".csv", 0, 330)
     # accu_dict(14)
@@ -182,9 +252,9 @@ if __name__ == "__main__":
     if function_name == "all":
         # To use this command, please make sure that you have already created the two folders
         # ./chunks_folder and ./dicts_folder
-        data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks_folder/')
+        # data2chunks("./twitter.streaming6_byHuman_20200214_20200612/twitter.streaming6_byHuman_20200214_20200612.csv", './chunks_folder/')
         chunks2dict("./chunks_folder/", "./dicts_folder/dict_0-329.csv")
-        accu_dict(14)
+        accu_dict("./dicts_folder/dict_0-329.csv", "./dicts_folder/accu_dict_0-329_14.csv", 14)
         calc_percent("./dicts_folder/accu_dict_0-329_14.csv", "./dicts_folder/accu_dict_0-329_14_percent.csv")
     elif function_name == "data2chunks":
         read_path = str(sys.argv[2])
@@ -203,6 +273,10 @@ if __name__ == "__main__":
         read_path = str(sys.argv[2])
         write_path = str(sys.argv[3])
         calc_percent(read_path, write_path)
+    elif function_name == "convert":
+        convert_to_js(param)
     else:
         print("Please enter correct function name")
         exit(1)
+
+
