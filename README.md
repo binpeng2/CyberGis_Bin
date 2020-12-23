@@ -42,6 +42,8 @@ python data_preprocess.py data2chunks ./twitter.streaming6_byHuman_20200214_2020
   
 4, More details about the functions, their arguments, and how to use them can be found in comments of the code. The main function also provides an example of how to use them. 
 
+5, New command "python data_preprocess.py convert" could convert percentage change into js file. Make sure the inputCSV is valid and then 
+
 # Progress:
 1, I have written a script to extract number of visitors to any city from twitter_streaming data from twitter API.  
 2, Collected COVID cases data of some MSA.  
