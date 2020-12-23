@@ -223,7 +223,7 @@ def convert_to_js(param):
     filename = os.path.join(dirname, 'data')
     if not os.path.exists(filename):
         os.makedirs(filename)
-    ofile = open('./data/deaths.js', 'w+')
+    ofile = open('./data/dict.js', 'w+')
     ofile.write('var GEO_VARIABLES =\n')
     ofile.write('[\n')
     ofile.write('  ' + json.dumps(heading) + ',\n')
